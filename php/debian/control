@@ -1,0 +1,13 @@
+Source: php5-prefixdb
+Section: web
+Priority: optional
+Maintainer: Pierre-Yves Kerembellec <py.kerembellec@gmail.com>
+Standards-Version: 3.7.2
+Build-Depends: debhelper (>= 5), autotools-dev, php5-dev, libprefixdb1 (>= 1.1)
+
+Package: php5-prefixdb
+Section: web
+Architecture: any
+Priority: optional
+Depends: ucf, php5-common, libprefixdb1 (>= 1.1)
+Description: PrefixDB module for php5

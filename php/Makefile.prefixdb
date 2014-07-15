@@ -1,0 +1,24 @@
+# This file is part of the PrefixDB library
+# Copyright (c) 2014 Pierre-Yves Kerembellec <py.kerembellec@gmail.com>
+
+test: modules/prefixdb.so
+	php -n -c prefixdb_test.ini -f prefixdb_test.php
+
+modules/prefixdb.so: Makefile prefixdb.c
+	make -f Makefile
+
+Makefile: config.m4
+	phpize
+	./configure
+
+clean:
+
+distclean: debclean
+	make -f Makefile distclean
+	phpize --clean
+
+deb:
+	debuild -i -us -uc -b
+
+debclean:
+	debuild clean

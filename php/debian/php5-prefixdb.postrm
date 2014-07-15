@@ -1,0 +1,11 @@
+#! /bin/sh -e
+
+php5dismod -s ALL prefixdb
+if test "$1" = "purge"; then
+    ucf --purge /etc/php5/mods-available/prefixdb.ini
+fi
+
+#DEBHELPER#
+
+exit 0
+

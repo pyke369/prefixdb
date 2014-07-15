@@ -1,0 +1,10 @@
+#! /bin/sh -e
+
+if test "$1" = "configure"; then
+    ucf /usr/share/php5-prefixdb/prefixdb.ini /etc/php5/mods-available/prefixdb.ini
+    php5enmod -s ALL prefixdb
+fi
+
+#DEBHELPER#
+
+exit 0

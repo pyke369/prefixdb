@@ -1,0 +1,5 @@
+libprefixdb (1.1) stable; urgency=low
+
+  * PrefixDB library
+
+ -- Pierre-Yves Kerembellec <py.kerembellec@gmail.com>  Mon, 07 Jul 2014 09:32:28 +0200

@@ -1,0 +1,37 @@
+#!/usr/bin/make -f
+
+build: build-stamp
+
+build-stamp:
+	dh_testdir
+	$(MAKE) -f Makefile.prefixdb
+	touch build-stamp
+
+clean:
+	dh_testdir
+	dh_testroot
+	rm -f build-stamp
+	$(MAKE) -f Makefile.prefixdb clean
+	dh_clean
+
+install: build
+	dh_testdir
+	dh_testroot
+	dh_clean -k
+	dh_installdirs
+
+binary-arch: build install
+	dh_testdir
+	dh_testroot
+	dh_installinit
+	dh_fixperms
+	install -D -m 644 $(CURDIR)/modules/prefixdb.so $(CURDIR)/debian/php5-prefixdb$(shell /usr/bin/php-config --extension-dir)/prefixdb.so
+	mkdir -p $(CURDIR)/debian/php5-prefixdb/usr/share/php5-prefixdb/
+	echo "; configuration for php PrefixDB module\n; priority=20\nextension=prefixdb.so" > $(CURDIR)/debian/php5-prefixdb/usr/share/php5-prefixdb/prefixdb.ini
+	dh_installdeb
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
+binary: binary-arch
+.PHONY: build clean binary-arch binary install

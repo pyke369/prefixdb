@@ -1,0 +1,12 @@
+Source: libprefixdb
+Section: libs
+Priority: optional
+Maintainer: Pierre-Yves Kerembellec <py.kerembellec@gmail.com>
+Standards-Version: 3.7.2
+Build-Depends: debhelper (>= 5), gcc, make
+
+Package: libprefixdb1
+Section: libs
+Architecture: any
+Priority: optional
+Description: PrefixDB library
