@@ -1,3 +1,9 @@
+php5-prefixdb (1.2) precise; urgency=low
+
+  * RTFM
+
+ -- Pierre-Yves Kerembellec <py.kerembellec@gmail.com>  Thu, 17 Jul 2014 20:09:13 +0000
+
 php5-prefixdb (1.1) stable; urgency=low
 
   * PrefixDB module for php5

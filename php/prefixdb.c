@@ -37,10 +37,10 @@ PHP_METHOD(PrefixDB, __construct)
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|s", &path, &length) == SUCCESS && length)
     {
-        if (zend_hash_find(&prefixdb_cache, path, strlen(path) + 1, (void **)&pcache) == SUCCESS)
+        if (zend_hash_find(&prefixdb_cache, path, length + 1, (void **)&pcache) == SUCCESS)
         {
             time(&now);
-            if (now - (*pcache)->checked >= 10)
+            if (now - (*pcache)->checked >= 30)
             {
                 (*pcache)->checked = now;
                 if (!stat(path, &info) && info.st_mtime > (*pcache)->modified && info.st_mtime <= (now - 5))
@@ -66,7 +66,7 @@ PHP_METHOD(PrefixDB, __construct)
             {
                 php_error_docref(NULL TSRMLS_CC, E_WARNING, "cannot open or invalid PrefixDB database \"%s\"", path);
             }
-            else if ((cache = ecalloc(1, sizeof(PREFIXDB_CACHE))))
+            else if ((cache = calloc(1, sizeof(PREFIXDB_CACHE))))
             {
                 time(&cache->checked);
                 cache->modified  = cache->checked;
@@ -76,7 +76,7 @@ PHP_METHOD(PrefixDB, __construct)
                 {
                     cache->modified = info.st_mtime;
                 }
-                zend_hash_add(&prefixdb_cache, path, strlen(path) + 1, &cache, sizeof(PREFIXDB_CACHE *), NULL);
+                zend_hash_add(&prefixdb_cache, path, length + 1, &cache, sizeof(PREFIXDB_CACHE *), NULL);
             }
         }
     }
@@ -164,11 +164,10 @@ static zend_function_entry prefixdb_class_methods[] =
 PHP_MINIT_FUNCTION(prefixdb)
 {
     zend_class_entry class_entry;
-
     INIT_CLASS_ENTRY(class_entry, "PrefixDB", prefixdb_class_methods);
     prefixdb_class_entry = zend_register_internal_class(&class_entry TSRMLS_CC);
     prefixdb_class_entry->create_object = prefixdb_ctor;
-    zend_hash_init(&prefixdb_cache, 256, NULL, NULL, 0);
+    zend_hash_init(&prefixdb_cache, 256, NULL, NULL, 1);
     REGISTER_LONG_CONSTANT("PREFIXDB_ERROR_OK",       PREFIXDB_ERROR_OK,       CONST_CS | CONST_PERSISTENT);
     REGISTER_LONG_CONSTANT("PREFIXDB_ERROR_PARAM",    PREFIXDB_ERROR_PARAM,    CONST_CS | CONST_PERSISTENT);
     REGISTER_LONG_CONSTANT("PREFIXDB_ERROR_MEMORY",   PREFIXDB_ERROR_MEMORY,   CONST_CS | CONST_PERSISTENT);
@@ -189,7 +188,7 @@ PHP_MSHUTDOWN_FUNCTION(prefixdb)
          zend_hash_move_forward_ex(&prefixdb_cache, &position))
     {
         prefixdb_free((*cache)->db);
-        efree(*cache);
+        free(*cache);
     }
     zend_hash_destroy(&prefixdb_cache);
     return SUCCESS;
