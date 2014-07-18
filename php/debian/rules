@@ -25,7 +25,7 @@ binary-arch: build install
 	dh_testroot
 	dh_installinit
 	dh_fixperms
-	install -D -m 644 $(CURDIR)/modules/prefixdb.so $(CURDIR)/debian/php5-prefixdb$(shell /usr/bin/php-config --extension-dir)/prefixdb.so
+	install -D -m 644 $(CURDIR)/modules/prefixdb.so $(CURDIR)/debian/php5-prefixdb$(shell /usr/bin/php-config5 --extension-dir)/prefixdb.so
 	mkdir -p $(CURDIR)/debian/php5-prefixdb/usr/share/php5-prefixdb/
 	echo "; configuration for php PrefixDB module\n; priority=20\nextension=prefixdb.so" > $(CURDIR)/debian/php5-prefixdb/usr/share/php5-prefixdb/prefixdb.ini
 	dh_installdeb
