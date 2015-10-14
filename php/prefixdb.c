@@ -7,14 +7,14 @@
 #include "php.h"
 
 #include <libprefixdb.h>
-
-static HashTable prefixdb_cache;
+#include "khash.h"
 
 typedef struct
 {
     PREFIXDB *db;
     time_t   checked, modified;
 } PREFIXDB_CACHE;
+KHASH_MAP_INIT_STR(PREFIXDB_HASH, PREFIXDB_CACHE *)
 
 typedef struct
 {
@@ -23,33 +23,36 @@ typedef struct
     int         cached;
 } PREFIXDB_OBJECT;
 
+khash_t(PREFIXDB_HASH) *prefixdb_cache;
 zend_class_entry *prefixdb_class_entry;
 
 PHP_METHOD(PrefixDB, __construct)
 {
     PREFIXDB_OBJECT *instance = (PREFIXDB_OBJECT *)zend_object_store_get_object(getThis() TSRMLS_CC);
-    PREFIXDB_CACHE  *cache, **pcache;
+    PREFIXDB_CACHE  *cache;
     PREFIXDB        *pfdb;
+    khiter_t        khit;
     struct stat     info;
     time_t          now;
     char            *path = NULL;
-    int             length = 0;
+    int             length = 0, status;
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|s", &path, &length) == SUCCESS && length)
     {
-        if (zend_hash_find(&prefixdb_cache, path, length + 1, (void **)&pcache) == SUCCESS)
+        if ((khit = kh_get(PREFIXDB_HASH, prefixdb_cache, path)) != kh_end(prefixdb_cache))
         {
+            cache = kh_value(prefixdb_cache, khit);
             time(&now);
-            if (now - (*pcache)->checked >= 30)
+            if (now - cache->checked >= 30)
             {
-                (*pcache)->checked = now;
-                if (!stat(path, &info) && info.st_mtime > (*pcache)->modified && info.st_mtime <= (now - 5))
+                cache->checked = now;
+                if (!stat(path, &info) && info.st_mtime > cache->modified && info.st_mtime <= (now - 5))
                 {
                     if ((pfdb = prefixdb_load_file(path, 0)))
                     {
-                        prefixdb_free((*pcache)->db);
-                        (*pcache)->db       = pfdb;
-                        (*pcache)->modified = info.st_mtime;
+                        prefixdb_free(cache->db);
+                        cache->db       = pfdb;
+                        cache->modified = info.st_mtime;
                     }
                     else
                     {
@@ -57,7 +60,7 @@ PHP_METHOD(PrefixDB, __construct)
                     }
                 }
             }
-            instance->db     = (*pcache)->db;
+            instance->db     = cache->db;
             instance->cached = 1;
         }
         else
@@ -76,7 +79,8 @@ PHP_METHOD(PrefixDB, __construct)
                 {
                     cache->modified = info.st_mtime;
                 }
-                zend_hash_add(&prefixdb_cache, path, length + 1, &cache, sizeof(PREFIXDB_CACHE *), NULL);
+                khit = kh_put(PREFIXDB_HASH, prefixdb_cache, strdup(path), &status);
+                kh_value(prefixdb_cache, khit) = cache;
             }
         }
     }
@@ -167,7 +171,7 @@ PHP_MINIT_FUNCTION(prefixdb)
     INIT_CLASS_ENTRY(class_entry, "PrefixDB", prefixdb_class_methods);
     prefixdb_class_entry = zend_register_internal_class(&class_entry TSRMLS_CC);
     prefixdb_class_entry->create_object = prefixdb_ctor;
-    zend_hash_init(&prefixdb_cache, 256, NULL, NULL, 1);
+    prefixdb_cache = kh_init(PREFIXDB_HASH);
     REGISTER_LONG_CONSTANT("PREFIXDB_ERROR_OK",       PREFIXDB_ERROR_OK,       CONST_CS | CONST_PERSISTENT);
     REGISTER_LONG_CONSTANT("PREFIXDB_ERROR_PARAM",    PREFIXDB_ERROR_PARAM,    CONST_CS | CONST_PERSISTENT);
     REGISTER_LONG_CONSTANT("PREFIXDB_ERROR_MEMORY",   PREFIXDB_ERROR_MEMORY,   CONST_CS | CONST_PERSISTENT);
@@ -180,17 +184,18 @@ PHP_MINIT_FUNCTION(prefixdb)
 
 PHP_MSHUTDOWN_FUNCTION(prefixdb)
 {
-    PREFIXDB_CACHE **cache;
-    HashPosition   position;
+    khiter_t khit;
 
-    for (zend_hash_internal_pointer_reset_ex(&prefixdb_cache, &position);
-         zend_hash_get_current_data_ex(&prefixdb_cache, (void **)&cache, &position) == SUCCESS;
-         zend_hash_move_forward_ex(&prefixdb_cache, &position))
+    for (khit = kh_begin(prefixdb_cache); khit != kh_end(prefixdb_cache); ++khit)
     {
-        prefixdb_free((*cache)->db);
-        free(*cache);
+        if (kh_exist(prefixdb_cache, khit))
+        {
+            free((char *)kh_key(prefixdb_cache, khit));
+            prefixdb_free(kh_value(prefixdb_cache, khit)->db);
+            free(kh_value(prefixdb_cache, khit));
+        }
     }
-    zend_hash_destroy(&prefixdb_cache);
+    kh_destroy(PREFIXDB_HASH, prefixdb_cache);
     return SUCCESS;
 }
 

@@ -33,6 +33,9 @@ $exit |= ($status != PREFIXDB_ERROR_OK ? 1 : 0);
 $begin = microtime(true); $pfdb = new PrefixDB('/tmp/bench.pfdb'); $end = microtime(true);
 printf("load database             pass [%.06fs]\n", $end - $begin);
 
+$begin = microtime(true); $pfdb = new PrefixDB('/tmp/bench.pfdb'); $end = microtime(true);
+printf("load database (cached)    pass [%.06fs]\n", $end - $begin);
+
 print sprintf("search %6d addresses   ", SEARCHES_COUNT); fflush(STDOUT);
 $matches = array(0, 0);
 $begin   = microtime(true);
