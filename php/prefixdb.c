@@ -6,8 +6,15 @@
 #endif
 #include "php.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 #include <libprefixdb.h>
 #include "khash.h"
+#ifdef __cplusplus
+}
+#endif
 
 typedef struct
 {
@@ -50,7 +57,7 @@ PHP_METHOD(PrefixDB, __construct)
                 {
                     if ((pfdb = prefixdb_load_file(path, 0)))
                     {
-                        prefixdb_free(cache->db);
+                        prefixdb_free(&(cache->db));
                         cache->db       = pfdb;
                         cache->modified = info.st_mtime;
                     }
@@ -69,7 +76,7 @@ PHP_METHOD(PrefixDB, __construct)
             {
                 php_error_docref(NULL TSRMLS_CC, E_WARNING, "cannot open or invalid PrefixDB database \"%s\"", path);
             }
-            else if ((cache = calloc(1, sizeof(PREFIXDB_CACHE))))
+            else if ((cache = (PREFIXDB_CACHE *)calloc(1, sizeof(PREFIXDB_CACHE))))
             {
                 time(&cache->checked);
                 cache->modified  = cache->checked;
@@ -148,13 +155,18 @@ static zend_object_value prefixdb_ctor(zend_class_entry *class_entry TSRMLS_DC)
     zend_object_value value;
     PREFIXDB_OBJECT   *instance;
 
-    instance = ecalloc(1, sizeof(PREFIXDB_OBJECT));
+    instance = (PREFIXDB_OBJECT *)ecalloc(1, sizeof(PREFIXDB_OBJECT));
     zend_object_std_init(&(instance->zo), class_entry TSRMLS_CC);
     value.handle = zend_objects_store_put(instance, (zend_objects_store_dtor_t)zend_objects_destroy_object,
                                                     (zend_objects_free_object_storage_t)prefixdb_dtor, NULL TSRMLS_CC);
     value.handlers = zend_get_std_object_handlers();
     return value;
 }
+
+const zend_function_entry prefixdb_functions[] =
+{
+    ZEND_FE_END
+};
 
 static zend_function_entry prefixdb_class_methods[] =
 {
@@ -191,7 +203,7 @@ PHP_MSHUTDOWN_FUNCTION(prefixdb)
         if (kh_exist(prefixdb_cache, khit))
         {
             free((char *)kh_key(prefixdb_cache, khit));
-            prefixdb_free(kh_value(prefixdb_cache, khit)->db);
+            prefixdb_free(&(kh_value(prefixdb_cache, khit)->db));
             free(kh_value(prefixdb_cache, khit));
         }
     }
@@ -203,7 +215,7 @@ zend_module_entry prefixdb_module_entry =
 {
     STANDARD_MODULE_HEADER,
     "prefixdb",
-    NULL,
+    prefixdb_functions,
     PHP_MINIT(prefixdb),
     PHP_MSHUTDOWN(prefixdb),
     NULL,
@@ -213,6 +225,6 @@ zend_module_entry prefixdb_module_entry =
     STANDARD_MODULE_PROPERTIES
 };
 
-#ifdef COMPILE_DL_PREFIXDB
+#if defined(COMPILE_DL_PREFIXDB) || defined(HHVM)
 ZEND_GET_MODULE(prefixdb)
 #endif

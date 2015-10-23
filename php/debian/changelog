@@ -1,3 +1,9 @@
+php5-prefixdb (1.4) stable; urgency=medium
+
+  * moar HHVM compatibility
+
+ -- Pierre-Yves Kerembellec <py.kerembellec@gmail.com>  Fri, 23 Oct 2015 09:05:20 +0200
+
 php5-prefixdb (1.3) stable; urgency=medium
 
   * do not use Zend HashTable (incompatibility with HHVM)
