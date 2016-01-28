@@ -11,7 +11,7 @@ libprefixdb.so.1: libprefixdb.h libprefixdb.c
 	$(CC) $(CFLAGS) -shared -o libprefixdb.so.1 libprefixdb-shared.o
 
 libprefixdb.a: libprefixdb.h libprefixdb.c
-	$(CC) $(CFLAGS) -c -o libprefixdb-static.o libprefixdb.c
+	$(CC) $(CFLAGS) -fpic -c -o libprefixdb-static.o libprefixdb.c
 	$(AR) r libprefixdb.a libprefixdb-static.o
 
 prefixdb: prefixdb.c libprefixdb.a
