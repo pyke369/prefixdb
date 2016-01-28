@@ -1,6 +1,7 @@
 # This file is part of the PrefixDB library
 # Copyright (c) 2014 Pierre-Yves Kerembellec <py.kerembellec@gmail.com>
 
+PREFIX=/usr/local
 CFLAGS=-Wall -O3 -I. -L.
 
 test: libprefixdb.so.1 libprefixdb.a prefixdb
@@ -27,3 +28,10 @@ deb:
 
 debclean:
 	debuild clean
+
+install: libprefixdb.h libprefixdb.so.1 libprefixdb.a prefixdb
+	install -m 0755 prefixdb $(PREFIX)/bin
+	install -m 0644 libprefixdb.so.1 libprefixdb.a $(PREFIX)/lib
+	install -m 0644 libprefixdb.h $(PREFIX)/include
+
+.PHONY: install
